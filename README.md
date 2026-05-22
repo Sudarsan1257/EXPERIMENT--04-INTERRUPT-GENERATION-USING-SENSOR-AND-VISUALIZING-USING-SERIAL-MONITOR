@@ -426,7 +426,10 @@ void assert_failed(uint8_t *file, uint32_t line)
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "stdio.h"
+#include"stdbool.h"
+#include"stdio.h"
+bool IRSENSOR;
+void IRPAIR();
 #if defined(__GNUC__)
 #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
 #endif
@@ -509,23 +512,33 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+	  IRPAIR();
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+void IRPAIR()
 {
-	if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_4)==1)
-	{
-		printf("Interrupt Generated\n");
-	}
+IRSENSOR = HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_4);
+if(IRSENSOR==0)
+{
+HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET);
+printf("Obstacle Detected\n");
+HAL_Delay(1000);
+}
+else
+{
+HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET);
+printf("Obstacle Not Detected\n");
+HAL_Delay(1000);
+}
 }
 PUTCHAR_PROTOTYPE
 {
-	HAL_UART_Transmit(&huart2,(uint8_t*)&ch,1,0xFFFF);
-	return ch;
+HAL_UART_Transmit(&huart2,(uint8_t*)&ch,1,0xFFFF);
+return ch;
 }
+
 /**
   * @brief System Clock Configuration
   * @retval None
@@ -632,15 +645,21 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET);
+
   /*Configure GPIO pin : PB4 */
   GPIO_InitStruct.Pin = GPIO_PIN_4;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
+  /*Configure GPIO pin : PB5 */
+  GPIO_InitStruct.Pin = GPIO_PIN_5;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
@@ -681,6 +700,7 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+
 
 ```
 ## Output screen shots of serial port utility   :
